@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -17,51 +16,62 @@ function Navbar() {
     }
   };
 
+  const totalQty = cart.reduce((s, i) => s + (i.quantity || 0), 0);
+
   return (
     <nav className="navbar">
-      {/* LEFT: Logo */}
-      <div className="nav-left">
+      <div className="navbar-inner">
         <Link to="/" className="nav-logo">
-          🏀 SportHub
+          <span className="logo-badge"><img src="https://d1csarkz8obe9u.cloudfront.net/posterpreviews/sports-logo-football-logo-design-template-3ce28d4e7f05e330ed86407f63c53dc8_screen.jpg?ts=1676704351" alt="" /></span>
+          SportHub
         </Link>
-      </div>
 
-      {/* CENTER MENU */}
-      <div className="nav-center">
-        <NavLink to="/" end>
-          Home
-        </NavLink>
-        <NavLink to="/products/all">Products</NavLink>
-        <NavLink to="/offers">Offers</NavLink>
-        <NavLink to="/categories">Categories</NavLink>
-        <NavLink to="/reviews">Reviews</NavLink>
-      </div>
+        <div className="nav-center">
+          <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+            Home
+          </NavLink>
+          <NavLink to="/products/all" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+            Products
+          </NavLink>
+          <NavLink to="/offers" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+            Offers
+          </NavLink>
+          <NavLink to="/categories" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+            Categories
+          </NavLink>
+          <NavLink to="/reviews" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+            Reviews
+          </NavLink>
+        </div>
 
-      {/* RIGHT: CART + AUTH */}
-      <div className="nav-right">
-        <button className="cart-btn" onClick={handleCartClick}>
-          🛒 <span>{cart.length}</span>
-        </button>
+        <div className="nav-right">
+          {auth?.user?.role === "admin" && <span className="badge">Admin</span>}
 
-        {!auth ? (
-          <>
-            <Link to="/login" className="nav-auth">
-              Login
-            </Link>
-            <Link to="/register" className="nav-auth">
-              Register
-            </Link>
-          </>
-        ) : (
-          <>
-            <span className="nav-user">
-              Hello,&nbsp;<strong>{auth.user?.name || "User"}</strong>
-            </span>
-            <button className="logout-btn" onClick={logout}>
-              Logout
-            </button>
-          </>
-        )}
+          <button className="cart-btn" onClick={handleCartClick}>
+            🛒 Cart
+            <span className={`cart-count ${totalQty ? "pulse" : ""}`}>{totalQty}</span>
+          </button>
+
+          {!auth ? (
+            <>
+              <Link to="/login" className="btn btn-ghost">
+                Login
+              </Link>
+              <Link to="/register" className="btn btn-primary">
+                Register
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="badge">
+                Hello,&nbsp;<strong>{auth.user?.name || "User"}</strong>
+              </span>
+              <button className="btn btn-danger" onClick={logout}>
+                Logout
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

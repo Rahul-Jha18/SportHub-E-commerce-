@@ -30,6 +30,7 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <div className="app-root">
+          <div className="bg-orbs" />
           <Navbar />
           <main>
             <Routes>

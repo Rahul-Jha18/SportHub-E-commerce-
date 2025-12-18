@@ -1,110 +1,158 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/api";
 import ProductCard from "../components/ProductCard";
+import { useNavigate } from "react-router-dom";
+
+const CATEGORY_TABS = [
+  "ALL",
+  "Football",
+  "Cricket",
+  "Gym",
+  "Badminton",
+  "Tennis",
+  "Swimming",
+  "Basketball",
+];
 
 function Home() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
+  const [activeCat, setActiveCat] = useState("ALL");
   const [search, setSearch] = useState("");
-  const [filtered, setFiltered] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get("/products")
-      .then((res) => {
-        setProducts(res.data);
-        setFiltered(res.data);
-
-        const cats = [...new Set(res.data.map((p) => p.category).filter(Boolean))];
-        setCategories(cats);
-      })
-      .catch(console.error);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/products");
+        setProducts(res.data || []);
+      } catch (err) {
+        console.error(err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  // SEARCH FILTER
-  useEffect(() => {
-    const s = search.toLowerCase();
-    setFiltered(
-      products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(s) ||
-          (p.category && p.category.toLowerCase().includes(s))
-      )
-    );
-  }, [search, products]);
+  const filtered = useMemo(() => {
+    const s = search.trim().toLowerCase();
 
-  // CATEGORY FILTER
-  const filterCategory = (cat) => {
-    if (cat === "ALL") {
-      setFiltered(products);
-    } else {
-      setFiltered(products.filter((p) => p.category === cat));
-    }
+    return products.filter((p) => {
+      const matchCat =
+        activeCat === "ALL" || (p.category || "").toLowerCase() === activeCat.toLowerCase();
+
+      if (!matchCat) return false;
+
+      if (!s) return true;
+
+      const name = (p.name || "").toLowerCase();
+      const cat = (p.category || "").toLowerCase();
+      const brand = (p.brand || "").toLowerCase(); // optional if you have brand
+      const sport = (p.sport_type || "").toLowerCase();
+
+      return name.includes(s) || cat.includes(s) || brand.includes(s) || sport.includes(s);
+    });
+  }, [products, activeCat, search]);
+
+  const handleTab = (cat) => {
+    setActiveCat(cat);
+  };
+
+  const goToCategoryPage = () => {
+    // open products page with current category selected
+    const cat = activeCat === "ALL" ? "all" : activeCat;
+    navigate(`/products/${encodeURIComponent(cat)}`);
   };
 
   return (
     <div className="page-wrapper">
-      {/* HERO BANNER */}
-      <div className="hero-banner">
-        <div className="hero-overlay" />
+      {/* HERO */}
+      <div className="hero glass">
         <div className="hero-content">
           <h1>Welcome to SportHub</h1>
-          <p>Your one-stop destination for all sports equipment & accessories.</p>
-          <button className="hero-btn" onClick={() => filterCategory("ALL")}>
-            Shop Now
-          </button>
+          <p>
+            Premium sports gear store — search, filter and shop with a smooth UI.
+          </p>
+
+          <div className="hero-actions">
+            <button className="btn btn-primary" onClick={goToCategoryPage}>
+              Shop {activeCat === "ALL" ? "All" : activeCat}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}
+            >
+              Explore
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* SEARCH BAR */}
-      <div className="search-container">
+      {/* SEARCH */}
+      <div className="search-wrap">
         <input
+          className="input"
           type="text"
-          placeholder="Search sports items, categories, equipment…"
+          placeholder="Search by name, category, brand, sport type…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      {/* CATEGORY FILTERS */}
+      {/* CATEGORY FILTER PILLS */}
       <div className="category-filter">
-        <div className="category-pill" onClick={() => filterCategory("ALL")}>
-          All
-        </div>
-        {categories.map((cat) => (
-          <div
+        {CATEGORY_TABS.map((cat) => (
+          <button
             key={cat}
-            className="category-pill"
-            onClick={() => filterCategory(cat)}
+            type="button"
+            className={`pill ${activeCat === cat ? "active" : ""}`}
+            onClick={() => handleTab(cat)}
           >
-            {cat}
-          </div>
+            {cat === "ALL" ? "All" : cat}
+          </button>
         ))}
       </div>
 
       {/* AD BANNER */}
       <div className="ad-banner">
         <h2>🔥 Mega Sports Sale! Up to 40% OFF 🔥</h2>
-        <p>Limited time offers on Football, Cricket, Badminton and more.</p>
+        <p>Filter by category + search to find your gear faster.</p>
       </div>
 
-      {/* TRENDING SECTION */}
+      {/* TRENDING */}
       <h2 className="section-title">Trending Now</h2>
-      <div className="product-grid">
-        {filtered.slice(0, 6).map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="empty">Loading products…</div>
+      ) : filtered.length === 0 ? (
+        <div className="empty">No products match your filter/search.</div>
+      ) : (
+        <div className="product-grid">
+          {filtered.slice(0, 6).map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
 
       {/* ALL PRODUCTS */}
-      <h2 className="section-title" style={{ marginTop: 30 }}>
+      <h2 className="section-title" style={{ marginTop: 20 }}>
         All Products
       </h2>
-      <div className="product-grid">
-        {filtered.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+
+      {loading ? (
+        <div className="empty">Loading products…</div>
+      ) : filtered.length === 0 ? (
+        <div className="empty">No products found.</div>
+      ) : (
+        <div className="product-grid">
+          {filtered.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

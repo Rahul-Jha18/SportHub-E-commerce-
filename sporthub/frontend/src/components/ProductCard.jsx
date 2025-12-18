@@ -1,4 +1,3 @@
-// src/components/ProductCard.jsx
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -30,23 +29,38 @@ function ProductCard({ product }) {
 
   return (
     <div className="product-card">
-      {product.image_url && (
-        <img src={product.image_url} alt={product.name} loading="lazy" />
-      )}
+      <div className="product-img">
+        {product.image_url ? (
+          <img src={product.image_url} alt={product.name} loading="lazy" />
+        ) : (
+          <div style={{ height: "100%", display: "grid", placeItems: "center", color: "rgba(234,240,255,0.65)" }}>
+            No Image
+          </div>
+        )}
+      </div>
 
-      <h3>{product.name}</h3>
-      {product.category && (
-        <p className="product-category">{product.category}</p>
-      )}
-      <p className="product-price">Rs. {product.price}</p>
+      <div className="product-body">
+        <div className="product-title">{product.name}</div>
 
-      <div className="product-card-actions">
-        <button type="button" onClick={handleView}>
+        <div className="product-meta">
+          {product.category && <span className="chip">{product.category}</span>}
+          {typeof product.stock !== "undefined" && (
+            <span className="chip">
+              {Number(product.stock) > 0 ? `In stock: ${product.stock}` : "Out of stock"}
+            </span>
+          )}
+        </div>
+
+        <div className="price">Rs. {product.price}</div>
+      </div>
+
+      <div className="product-actions">
+        <button className="btn btn-ghost btn-small" type="button" onClick={handleView}>
           View
         </button>
 
-        <button type="button" onClick={handleAddToCart}>
-          Add to Cart
+        <button className="btn btn-primary btn-small" type="button" onClick={handleAddToCart}>
+          Add
         </button>
       </div>
     </div>

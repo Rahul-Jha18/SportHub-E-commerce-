@@ -13,7 +13,7 @@ function CategoryFilter() {
         res.data.forEach((p) => {
           if (p.category) unique.add(p.category);
         });
-        setCategories(Array.from(unique));
+        setCategories(Array.from(unique).sort((a, b) => a.localeCompare(b)));
       })
       .catch(console.error);
   }, []);
@@ -21,16 +21,14 @@ function CategoryFilter() {
   return (
     <div className="page-wrapper">
       <h1 className="section-title">Browse by Category</h1>
-      <div className="category-filter">
-        {categories.map((cat) => (
-          <Link
-            key={cat}
-            to={`/products/${encodeURIComponent(cat)}`}
-            className="category-pill"
-          >
-            {cat}
-          </Link>
-        ))}
+      <div className="glass" style={{ padding: 16, borderRadius: 16 }}>
+        <div className="category-filter" style={{ marginBottom: 0 }}>
+          {categories.map((cat) => (
+            <Link key={cat} to={`/products/${encodeURIComponent(cat)}`} className="pill">
+              {cat}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -112,149 +112,147 @@ function Cart() {
   };
 
   return (
-    <div className="page-wrapper">
-      <h1>Your Cart</h1>
+  <div className="page-wrapper">
+    <h1 className="section-title">Your Cart</h1>
 
-      {cart.length === 0 ? (
-        <p>Your cart is empty.</p>
-      ) : (
-        <>
-          {cart.map((item) => (
-            <div key={item.id} className="cart-item">
-              {item.image_url && (
-                <img src={item.image_url} alt={item.name} />
-              )}
-              <div className="cart-item-info">
-                <h3>{item.name}</h3>
-                <p>Rs. {item.price}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <button type="button" onClick={() => handleDec(item)}>
-                    -
-                  </button>
-                  <span>Qty: {item.quantity}</span>
-                  <button type="button" onClick={() => handleInc(item)}>
-                    +
-                  </button>
-                </div>
+    {cart.length === 0 ? (
+      <div className="empty">Your cart is empty.</div>
+    ) : (
+      <>
+        {cart.map((item) => (
+          <div key={item.id} className="cart-item">
+            {item.image_url && <img src={item.image_url} alt={item.name} />}
+            <div className="cart-item-info">
+              <h3 style={{ marginBottom: 6 }}>{item.name}</h3>
+              <div className="chip" style={{ display: "inline-flex" }}>
+                Rs. {item.price}
               </div>
-              <button onClick={() => removeFromCart(item.id)}>Remove</button>
-            </div>
-          ))}
 
-          <div className="cart-summary">
-            <h2>Items Total: Rs. {totalItemsAmount.toFixed(2)}</h2>
-            <button style={{ marginTop: 10 }} onClick={handleProceed}>
-              Proceed to Checkout
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* Checkout form appears ONLY after clicking Proceed */}
-      {showForm && (
-        <div className="auth-form" style={{ marginTop: 30 }}>
-          <h2>Order Details</h2>
-          <form onSubmit={submitOrder}>
-            <input
-              type="text"
-              name="address"
-              placeholder="Full Address"
-              required
-              value={form.address}
-              onChange={handleFormChange}
-            />
-            <input
-              type="text"
-              name="deliveryLocation"
-              placeholder="Delivery Location / City"
-              required
-              value={form.deliveryLocation}
-              onChange={handleFormChange}
-            />
-            <select
-              name="paymentMethod"
-              value={form.paymentMethod}
-              onChange={handleFormChange}
-            >
-              <option value="COD">Cash on Delivery</option>
-              <option value="CARD">Card Payment</option>
-              <option value="WALLET">Wallet / Online</option>
-            </select>
-            <input hidden 
-              type="number"
-              name="deliveryCharge"
-              placeholder="Delivery Charge"
-              value={form.deliveryCharge}
-              onChange={handleFormChange}
-            />
-            <button type="submit" style={{ marginTop: 8 }}>
-              Confirm Order
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Orders list (user sees their own; admin sees all) */}
-      <h2 className="section-title" style={{ marginTop: 30 }}>
-        Your Orders
-      </h2>
-
-      {loadingOrders ? (
-        <p>Loading orders...</p>
-      ) : orders.length === 0 ? (
-        <p>No orders yet.</p>
-      ) : (
-        orders.map((order) => (
-          <div key={order.id} className="admin-item">
-            <div className="admin-item-info">
-              <strong>
-                Order #{order.id} –{" "}
-                <span style={{ textTransform: "capitalize" }}>
-                  {order.status}
-                </span>
-              </strong>
-              <p>
-                Total: Rs. {order.total_amount} | Placed on:{" "}
-                {order.created_at?.slice(0, 19).replace("T", " ")}
-              </p>
-              {order.address && <p>Address: {order.address}</p>}
-              {order.delivery_location && (
-                <p>Delivery: {order.delivery_location}</p>
-              )}
-              {order.payment_method && (
-                <p>Payment: {order.payment_method}</p>
-              )}
-              {typeof order.delivery_charge !== "undefined" && (
-                <p>Delivery Charge: Rs. {order.delivery_charge}</p>
-              )}
-
-              {order.items && order.items.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Items:</strong>
-                  <ul style={{ marginLeft: 16, marginTop: 4 }}>
-                    {order.items.map((it) => (
-                      <li key={it.id}>
-                        {it.product_name} x {it.quantity} (Rs. {it.unit_price})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {auth.user?.role === "admin" && (
-                <button
-                  style={{ marginTop: 10, background: "#ff3333" }}
-                  onClick={() => deleteOrder(order.id)}
-                >
-                  Delete Order
+              <div className="qty-controls">
+                <button className="btn btn-ghost" type="button" onClick={() => handleDec(item)}>
+                  -
                 </button>
-              )}
+                <span className="qty-chip">Qty: {item.quantity}</span>
+                <button className="btn btn-ghost" type="button" onClick={() => handleInc(item)}>
+                  +
+                </button>
+              </div>
             </div>
+
+            <button className="btn btn-danger" onClick={() => removeFromCart(item.id)}>
+              Remove
+            </button>
           </div>
-        ))
-      )}
-    </div>
-  );
+        ))}
+
+        <div className="cart-summary">
+          <h2 style={{ marginBottom: 10 }}>Items Total: Rs. {totalItemsAmount.toFixed(2)}</h2>
+          <button className="btn btn-primary" onClick={handleProceed}>
+            Proceed to Checkout
+          </button>
+        </div>
+      </>
+    )}
+
+    {showForm && (
+      <div className="auth-form" style={{ marginTop: 18 }}>
+        <h2 style={{ marginBottom: 10 }}>Order Details</h2>
+        <form onSubmit={submitOrder}>
+          <input
+            className="input"
+            type="text"
+            name="address"
+            placeholder="Full Address"
+            required
+            value={form.address}
+            onChange={handleFormChange}
+          />
+          <input
+            className="input"
+            type="text"
+            name="deliveryLocation"
+            placeholder="Delivery Location / City"
+            required
+            value={form.deliveryLocation}
+            onChange={handleFormChange}
+          />
+          <select
+            className="select"
+            name="paymentMethod"
+            value={form.paymentMethod}
+            onChange={handleFormChange}
+          >
+            <option value="COD">Cash on Delivery</option>
+            <option value="CARD">Card Payment</option>
+            <option value="WALLET">Wallet / Online</option>
+          </select>
+
+          <input
+            hidden
+            type="number"
+            name="deliveryCharge"
+            value={form.deliveryCharge}
+            onChange={handleFormChange}
+          />
+
+          <button className="btn btn-primary" type="submit">
+            Confirm Order
+          </button>
+        </form>
+      </div>
+    )}
+
+    <h2 className="section-title" style={{ marginTop: 22 }}>
+      Your Orders
+    </h2>
+
+    {loadingOrders ? (
+      <div className="empty">Loading orders…</div>
+    ) : orders.length === 0 ? (
+      <div className="empty">No orders yet.</div>
+    ) : (
+      orders.map((order) => (
+        <div key={order.id} className="admin-item">
+          <div className="admin-item-info">
+            <strong>
+              Order #{order.id} – <span style={{ textTransform: "capitalize" }}>{order.status}</span>
+            </strong>
+
+            <p style={{ marginTop: 6, color: "rgba(234,240,255,0.72)" }}>
+              Total: Rs. {order.total_amount} | Placed on:{" "}
+              {order.created_at?.slice(0, 19).replace("T", " ")}
+            </p>
+
+            {order.address && <p style={{ marginTop: 6 }}>Address: {order.address}</p>}
+            {order.delivery_location && <p>Delivery: {order.delivery_location}</p>}
+            {order.payment_method && <p>Payment: {order.payment_method}</p>}
+            {typeof order.delivery_charge !== "undefined" && <p>Delivery Charge: Rs. {order.delivery_charge}</p>}
+
+            {order.items?.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <strong>Items:</strong>
+                <ul style={{ marginLeft: 18, marginTop: 6, color: "rgba(234,240,255,0.78)" }}>
+                  {order.items.map((it) => (
+                    <li key={it.id}>
+                      {it.product_name} x {it.quantity} (Rs. {it.unit_price})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {auth.user?.role === "admin" && (
+              <button className="btn btn-danger" style={{ marginTop: 12 }} onClick={() => deleteOrder(order.id)}>
+                Delete Order
+              </button>
+            )}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+);
+
 }
 
 export default Cart;
