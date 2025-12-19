@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+console.log("✅ JWT_SECRET loaded length:", process.env.JWT_SECRET?.length);
+
 
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const orderRoutes = require('./routes/order.routes');
 const cartRoutes = require('./routes/cart.routes');
 const adminRoutes = require('./routes/admin.routes');
-
+const paymentRoutes = require("./routes/paymentRoutes");
 const { notFound, errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -22,6 +24,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/payments", paymentRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('SportHub API is running');

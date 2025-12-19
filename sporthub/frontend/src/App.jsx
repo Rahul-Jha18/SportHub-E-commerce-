@@ -14,6 +14,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import KhaltiReturn from "./pages/KhaltiReturn";
 import AdminProducts from "./pages/AdminProducts";
 
 // Wrapper to require login
@@ -45,6 +46,7 @@ function App() {
                   <div className="page-wrapper">Offers coming soon…</div>
                 }
               />
+              <Route path="/payment/khalti" element={<KhaltiReturn />} />
               <Route
                 path="/reviews"
                 element={

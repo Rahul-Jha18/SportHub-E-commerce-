@@ -1,4 +1,6 @@
+const axios = require("axios");
 const pool = require('../config/db');
+
 
 // GET /api/orders/my  – current user's orders
 async function getMyOrders(req, res, next) {
@@ -55,14 +57,12 @@ async function getAllOrdersAdmin(req, res, next) {
 }
 
 // POST /api/orders/checkout – convert CART to real order + save form data
-// POST /api/orders/checkout – convert CART to real order + save form data
 async function checkoutCart(req, res, next) {
   const userId = req.user.id;
   const {
     payment_method = 'COD',
     address = '',
     delivery_location = '',
-    // we IGNORE any delivery_charge from body now
   } = req.body;
 
   let conn;
@@ -92,55 +92,106 @@ async function checkoutCart(req, res, next) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    // 1) items total
     const [sumRows] = await conn.query(
       'SELECT SUM(quantity * unit_price) AS total FROM order_items WHERE order_id = ?',
       [cartOrder.id]
     );
     const itemsTotal = sumRows[0].total || 0;
 
-    // 2) delivery charge slabs
     let delivery_charge = 0;
-    if (itemsTotal < 1000) {
-      delivery_charge = 100;
-    } else if (itemsTotal < 5000) {
-      delivery_charge = 150;
-    } else if (itemsTotal < 10000) {
-      delivery_charge = 200;
-    } else {
-      delivery_charge = 250;
-    }
+    if (itemsTotal < 1000) delivery_charge = 100;
+    else if (itemsTotal < 5000) delivery_charge = 150;
+    else if (itemsTotal < 10000) delivery_charge = 200;
+    else delivery_charge = 250;
 
-    // 3) grand total
     const total = itemsTotal + delivery_charge;
 
-    // 4) update order as PENDING with all info
+    // ✅ update order first
     await conn.query(
       `UPDATE orders
        SET status = ?, total_amount = ?, payment_method = ?, address = ?,
-           delivery_location = ?, delivery_charge = ?
+           delivery_location = ?, delivery_charge = ?, payment_status = ?
        WHERE id = ?`,
       [
-        'PENDING',
+        payment_method === "KHALTI" ? "PENDING_PAYMENT" : "PENDING",
         total,
         payment_method,
         address,
         delivery_location,
         delivery_charge,
+        payment_method === "KHALTI" ? "PENDING" : "UNPAID",
         cartOrder.id,
       ]
     );
 
+    // ✅ COD normal flow
+    if (payment_method !== "KHALTI") {
+      await conn.commit();
+      return res.json({ orderId: cartOrder.id, itemsTotal, delivery_charge, total });
+    }
+
+    // ✅ Khalti initiate
+    const amountPaisa = Math.round(Number(total) * 100);
+
+    const payload = {
+      return_url: `${process.env.FRONTEND_URL}/payment/khalti`,
+      website_url: process.env.WEBSITE_URL,
+      amount: amountPaisa,
+      purchase_order_id: String(cartOrder.id),
+      purchase_order_name: "SportHub Order",
+      customer_info: {
+        name: req.user.name || "Customer",
+        email: req.user.email || "customer@sporthub.com",
+        phone: req.user.phone || "9800000000",
+      },
+    };
+
+    const resp = await axios.post(
+      `${process.env.KHALTI_BASE_URL}/epayment/initiate/`,
+      payload,
+      {
+        headers: {
+          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    const { pidx, payment_url } = resp.data;
+
+    await conn.query(
+      `UPDATE orders SET khalti_pidx = ? WHERE id = ?`,
+      [pidx, cartOrder.id]
+    );
+
     await conn.commit();
 
-    return res.json({ orderId: cartOrder.id, itemsTotal, delivery_charge, total });
+    return res.json({
+      orderId: cartOrder.id,
+      itemsTotal,
+      delivery_charge,
+      total,
+      payment_method: "KHALTI",
+      pidx,
+      payment_url,
+    });
   } catch (err) {
     if (conn) await conn.rollback();
+    console.error("Checkout error:", err?.response?.data || err.message);
     next(err);
   } finally {
     if (conn) conn.release();
   }
 }
+
+
+module.exports = {
+  getMyOrders,
+  getAllOrdersAdmin,
+  checkoutCart,
+  deleteOrder,
+};
 
 // DELETE /api/orders/:id – admin only: remove order + items
 async function deleteOrder(req, res, next) {

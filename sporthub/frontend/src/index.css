@@ -37,6 +37,7 @@ body {
   color: var(--text);
   background-color: #050505;
   transform: translateZ(0);
+  scroll-behavior: smooth;
   background-image:
     radial-gradient(
       1100px 700px at 20% 20%,

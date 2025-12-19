@@ -1,8 +1,7 @@
-// src/api/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5001/api", // match your backend PORT
+  baseURL: "http://localhost:5001/api",
 });
 
 api.interceptors.request.use((config) => {
@@ -10,8 +9,12 @@ api.interceptors.request.use((config) => {
     const raw = localStorage.getItem("sporthub_user");
     if (raw) {
       const data = JSON.parse(raw);
-      if (data?.token) {
-        config.headers.Authorization = `Bearer ${data.token}`;
+
+      const token =
+        data?.token || data?.accessToken || data?.jwt || data?.data?.token;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
   } catch (e) {
